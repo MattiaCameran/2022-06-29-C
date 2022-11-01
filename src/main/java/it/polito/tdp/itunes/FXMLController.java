@@ -5,7 +5,11 @@
 package it.polito.tdp.itunes;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
+
+import it.polito.tdp.itunes.model.Album;
+import it.polito.tdp.itunes.model.AlbumBilancio;
 import it.polito.tdp.itunes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -34,10 +38,10 @@ public class FXMLController {
     private Button btnPercorso; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbA1"
-    private ComboBox<?> cmbA1; // Value injected by FXMLLoader
+    private ComboBox<Album> cmbA1; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbA2"
-    private ComboBox<?> cmbA2; // Value injected by FXMLLoader
+    private ComboBox<Album> cmbA2; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtN"
     private TextField txtN; // Value injected by FXMLLoader
@@ -51,6 +55,21 @@ public class FXMLController {
     @FXML
     void doCalcolaAdiacenze(ActionEvent event) {
     	
+    	txtResult.clear();
+    	
+    	Album a = this.cmbA1.getValue();
+    	
+    	if(a == null) {
+    		txtResult.appendText("Selezionare un album!");
+    		return;
+    	}
+    	
+    	List<AlbumBilancio> lista = this.model.getAdiacenze(a);
+    	
+    	for(AlbumBilancio ab: lista) {
+    		txtResult.appendText(ab.toString()+"\n");
+    	}
+    	
     }
 
     @FXML
@@ -61,6 +80,26 @@ public class FXMLController {
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	
+    	txtResult.clear();
+    	
+    	String n1 = txtN.getText();
+    	
+    	if(n1 == null) {
+    		txtResult.appendText("Errore: inserire un prezzo!");
+    		return;
+    	}
+    	int n;
+    	try {
+    		n = Integer.parseInt(n1);
+    	}catch(NumberFormatException e) {
+    		txtResult.appendText("Errore: inserire un prezzo numerico intero.");
+    		return;
+    	}
+    	String msg = this.model.creaGrafo(n);
+    	txtResult.appendText(msg);
+    	
+    	this.cmbA1.getItems().addAll(this.model.getAlbums(n));
+    	this.cmbA2.getItems().addAll(this.model.getAlbums(n));
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete

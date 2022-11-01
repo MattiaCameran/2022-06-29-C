@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
 import it.polito.tdp.itunes.model.Album;
 import it.polito.tdp.itunes.model.Artist;
 import it.polito.tdp.itunes.model.Genre;
@@ -16,24 +18,54 @@ import it.polito.tdp.itunes.model.Track;
 
 public class ItunesDAO {
 	
-	public List<Album> getAllAlbums(){
-		final String sql = "SELECT * FROM Album";
+	public List<Album> getAllAlbums(int n){
+		String sql = "SELECT a.AlbumId, a.Title, SUM(t.UnitPrice) AS totPrezzo "
+				+ "FROM album a, track t "
+				+ "WHERE a.AlbumId = t.AlbumId "
+				+ "GROUP BY a.AlbumId, a.Title "
+				+ "HAVING SUM(t.UnitPrice) > ?";
 		List<Album> result = new LinkedList<>();
 		
 		try {
 			Connection conn = DBConnect.getConnection();
 			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, n);
 			ResultSet res = st.executeQuery();
 
 			while (res.next()) {
-				result.add(new Album(res.getInt("AlbumId"), res.getString("Title")));
+				result.add(new Album(res.getInt("AlbumId"), res.getString("Title"), res.getDouble("totPrezzo")));
+			}
+			conn.close();
+			return result;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+	}
+	
+	public void riempiMappa(int n, Map<Integer, Album> idMap){
+		String sql = "SELECT a.AlbumId, a.Title, SUM(t.UnitPrice) AS totPrezzo "
+				+ "FROM album a, track t "
+				+ "WHERE a.AlbumId = t.AlbumId "
+				+ "GROUP BY a.AlbumId, a.Title "
+				+ "HAVING SUM(t.UnitPrice) > ?";
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setDouble(1, n);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				if(!idMap.containsKey(res.getInt("AlbumId"))) {
+				idMap.put(res.getInt("AlbumId"), new Album(res.getInt("AlbumId"), res.getString("Title"), res.getDouble("totPrezzo")));
+				}
 			}
 			conn.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new RuntimeException("SQL Error");
 		}
-		return result;
 	}
 	
 	public List<Artist> getAllArtists(){
